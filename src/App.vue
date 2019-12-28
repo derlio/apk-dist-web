@@ -1,17 +1,22 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div id="header">
+      <img class="header_bg" src="./assets/image/web_bg1.png">
+      <img class="header_logo" src="./assets/image/web_logo2.png">
+    </div>
+    <div class="apk_dist_main">
+      <ApkDistMain  msg="Welcome to Your Vue.js App"/>
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import ApkDistMain from './components/ApkDistMain.vue'
 
 export default {
   name: 'app',
   components: {
-    HelloWorld
+    ApkDistMain
   }
 }
 </script>
@@ -23,6 +28,24 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+.header_bg {
+  width: 100%;
+  height:15rem;
+}
+.header_logo {
+  width: 16rem;
+  position: absolute;
+  top: 2rem;
+  left: 4rem;
+}
+.apk_dist_main {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top:15rem;
+}
+body {
+  margin: 0 !important;
 }
 </style>
