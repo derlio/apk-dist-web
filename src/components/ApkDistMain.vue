@@ -1,6 +1,6 @@
 <template>
   <el-container>
-    <el-aside>
+    <el-aside width="20%">
       <h3>Apk基本信息</h3>
       <el-table :data="tableData" :show-header="false" :border="false">
         <el-table-column prop="name" label="姓名" width="100px"></el-table-column>
@@ -96,11 +96,13 @@ export default {
   height: 100%;
 }
 .el-aside {
+  color: white;
   height: 100%;
   text-align: left;
-  width: 25rem;
+  width: 300px;
   padding: 10px;
   border-right: 1px solid #eaecef;
+  background-color: #333;
 }
 
 .el-aside .el-table {
@@ -108,6 +110,7 @@ export default {
   position: relative;
   background-color: transparent;
   top: 0px;
+  color: white;
 }
 
 .el-aside .el-table__row > td {
@@ -126,7 +129,8 @@ export default {
 .el-main {
   color: #333;
   text-align: center;
-  width: auto;
+  width: 30rem;
+  height: auto;
 }
 
 .el-main .el-steps {
