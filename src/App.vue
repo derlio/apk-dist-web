@@ -5,7 +5,7 @@
       <img class="header_logo" src="./assets/image/web_logo2.png">
     </div>
     <div class="apk_dist_main">
-      <ApkDistMain  msg="Welcome to Your Vue.js App"/>
+      <ApkDistMain />
     </div>
   </div>
 </template>
@@ -31,7 +31,7 @@ export default {
 }
 .header_bg {
   width: 100%;
-  height:15rem;
+  height:12rem;
 }
 .header_logo {
   width: 16rem;
@@ -43,7 +43,7 @@ export default {
   position: absolute;
   width: 100%;
   height: 100%;
-  top:15rem;
+  top:12rem;
 }
 body {
   margin: 0 !important;
