@@ -2,34 +2,28 @@
   <el-container>
     <el-aside width="20%">
       <h3>Apk基本信息</h3>
-      <el-table :data="tableData" :show-header="false" :border="false">
-        <el-table-column prop="name" label="姓名" width="100px"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
+      <el-table :data="apkInfo" :show-header="false" :border="false">
+        <el-table-column prop="name" label="name" width="100px"></el-table-column>
+        <el-table-column prop="value" label="value"></el-table-column>
       </el-table>
     </el-aside>
     <el-main>
       <div class="step-container">
-        <el-steps :active="0" simple width="80%">
+        <el-steps v-bind:active="stepIndex" simple width="80%">
           <el-step title="上传Apk" icon="el-icon-sell"></el-step>
           <el-step title="加固并生成渠道包" icon="el-icon-s-check"></el-step>
           <el-step title="上传Oss" icon="el-icon-upload"></el-step>
         </el-steps>
       </div>
 
-      <div class="upload" style="display:none;">
+      <div class="upload" v-if="stepIndex == 0">
         <el-upload
           class="upload-demo"
           drag
-          action="https://jsonplaceholder.typicode.com/posts/"
-          :on-preview="handlePreview"
-          :on-remove="handleRemove"
+          action="http://localhost:8081/upload"
           accept="application/vnd.android.package-archive"
-          :before-remove="beforeRemove"
-          :limit="limitnum"
-          :on-exceed="handleExceed"
-          :file-list="fileList"
-          :beforeUpload="beforeAvatarUpload"
-          :http-request="httpRequestUpload"
+          :limit="1"
+          :on-success="handleUploadApkSuccess"
         >
           <i class="el-icon-upload"></i>
           <div class="el-upload__text">
@@ -40,19 +34,34 @@
         </el-upload>
       </div>
 
-      <div class="generate-channels" style="display:none;">
+      <div class="generate-channels" v-if="stepIndex == 1">
         <div class="log-pane">
-          <div class="log-pane-item">你们是不是不想活了</div>
-          <div class="log-pane-item">你们是不是不想活了</div>
+          <div
+            class="log-pane-item"
+            v-for="item in buildChannelsLog"
+            :key="item.time"
+          >{{item.time}} {{item.text}}</div>
         </div>
       </div>
 
-      <div class="oss-result" >
-        <el-table :data="tableData" style="width: 80%" border>
-          <el-table-column prop="channel_name" label="渠道名" width="180" align="center"></el-table-column>
-          <el-table-column prop="link_address" label="Oss地址" align="center"></el-table-column>
-          <el-table-column prop="link_address" label="下载"  width="180px" align="center"><el-link type="primary">下载</el-link></el-table-column>
-          
+      <div class="oss-result" v-if="stepIndex == 2 || stepIndex == 3">
+        <el-table :data="ossResult" style="width: 80%" border>
+          <el-table-column prop="channel" label="渠道名" width="180" align="center"></el-table-column>
+          <el-table-column prop="progress" label="上传进度" align="center">
+            <template slot-scope="scope">
+              <el-progress
+                :stroke-width="12"
+                v-bind:percentage="scope.row.progress"
+                color="#FD7A86"
+                :show-text="false"
+              ></el-progress>
+            </template>
+          </el-table-column>
+          <el-table-column prop="url" label="下载" width="180px" align="center">
+            <template slot-scope="scope">
+              <el-link type="primary" v-bind:href="scope.row.url">下载</el-link>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </el-main>
@@ -60,32 +69,94 @@
 </template>
 
 <script>
+import { Loading } from "element-ui";
 export default {
   name: "ApkDistMain",
-  props: {
-    msg: String
+  props: {},
+  methods: {
+    debug(value) {
+      window.console.log(value);
+    },
+    handleUploadApkSuccess() {
+      let loading = Loading.service({
+        lock: true,
+        text: "正在处理",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)"
+      });
+      setTimeout(() => {
+        loading.close();
+        this.refreshStatus(() => {
+          let handle = setInterval(() => {
+            if (this.stepIndex == 3) {
+              this.$notify({
+                title: "Done",
+                message: "请下载渠道包上传相应市场",
+                type: "success"
+              });
+              clearInterval(handle);
+              return;
+            }
+            this.refreshStatus();
+          }, 1000);
+        });
+      }, 2000);
+    },
+    refreshStatus(callback) {
+      this.axios.get("http://localhost:8081/status").then(response => {
+        this.debug(response.data);
+        this.updateApkInfo(response.data.apkInfo);
+        this.updateStep(response.data.step.name);
+        this.buildChannelsLog = response.data.buildChannelsLog;
+        this.ossResult = response.data.ossResult;
+        if (callback) {
+          callback();
+        }
+      });
+    },
+    updateStep(step) {
+      var stepIndex = 0;
+      switch (step) {
+        case "idle":
+        case "upload-apk":
+          stepIndex = 0;
+          break;
+        case "jiagu":
+        case "build-channel":
+          stepIndex = 1;
+          break;
+        case "oss-upload":
+          stepIndex = 2;
+          break;
+        case "done":
+          stepIndex = 3;
+          break;
+      }
+      this.stepIndex = stepIndex;
+    },
+    updateApkInfo(info) {
+      if (info) {
+        this.debug(info);
+        var data = Array();
+        data.push({ name: "应用名", value: info.name });
+        data.push({ name: "包名", value: info.packageName });
+        data.push({ name: "Ver.Name", value: info.versionName });
+        data.push({ name: "Ver.Code", value: info.versionCode });
+        data.push({ name: "Channel", value: info.channel });
+        this.apkInfo = data;
+      }
+    }
   },
   data() {
     return {
-      tableData: [
-        {
-          name: "应用名",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          name: "包名",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          name: "Ver.Name",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          name: "Ver.Code",
-          address: "上海市普陀区金沙江路 1516 弄"
-        }
-      ]
+      apkInfo: [],
+      buildChannelsLog: [],
+      ossResult: [],
+      stepIndex: 0
     };
+  },
+  mounted: function() {
+    this.refreshStatus();
   }
 };
 </script>
@@ -93,6 +164,7 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
 .el-container {
+  width: auto;
   height: 100%;
 }
 .el-aside {
@@ -182,7 +254,7 @@ export default {
   margin: 4px;
 }
 
-.oss-result .el-table{
+.oss-result .el-table {
   margin-top: 50px;
   margin-left: auto;
   margin-right: auto;
